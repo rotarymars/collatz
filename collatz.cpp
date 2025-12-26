@@ -2,23 +2,41 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <unordered_map>
+
+// Memoization map: number -> steps to reach 1
+std::unordered_map<long long, int> memo;
 
 // Calculate the number of steps for a number to reach 1 in the Collatz sequence
+// Uses memoization to avoid redundant calculations
 int collatz_steps(long long n) {
-  int steps = 0;
-  while (n != 1) {
-    if (n % 2 == 0) {
-      n = n / 2;
-    } else {
-      n = 3 * n + 1;
-    }
-    steps++;
+  if (n == 1) {
+    return 0;
   }
+
+  // Check if already computed
+  auto it = memo.find(n);
+  if (it != memo.end()) {
+    return it->second;
+  }
+
+  // Calculate next value in sequence
+  long long next;
+  if (n % 2 == 0) {
+    next = n / 2;
+  } else {
+    next = 3 * n + 1;
+  }
+
+  // Recursively compute and memoize
+  int steps = 1 + collatz_steps(next);
+  memo[n] = steps;
   return steps;
 }
 
-// Read the last number from existing data file
-long long get_last_calculated_number(const std::string &filename) {
+// Read existing data file and populate the memo map
+// Returns the last calculated number
+long long load_existing_data(const std::string &filename) {
   std::ifstream infile(filename);
   if (!infile.is_open()) {
     return 0; // File doesn't exist, start from beginning
@@ -29,10 +47,13 @@ long long get_last_calculated_number(const std::string &filename) {
   int steps;
 
   while (infile >> num >> steps) {
+    memo[num] = steps;
     last_number = num;
   }
 
   infile.close();
+  std::cout << "Loaded " << memo.size() << " cached values from " << filename
+            << "\n";
   return last_number;
 }
 
@@ -51,8 +72,8 @@ int main(int argc, char *argv[]) {
 
   const std::string datafilename = "collatz_data.txt";
 
-  // Find where to continue from
-  long long start_number = get_last_calculated_number(datafilename) + 1;
+  // Load existing data into memo map and find where to continue from
+  long long start_number = load_existing_data(datafilename) + 1;
 
   if (start_number > max_number) {
     std::cout << "Already calculated up to " << (start_number - 1)
@@ -76,6 +97,7 @@ int main(int argc, char *argv[]) {
 
     datafile.close();
     std::cout << "Data appended to " << datafilename << "\n";
+    std::cout << "Memo cache size: " << memo.size() << " entries\n";
   }
 
   // Generate gnuplot script
