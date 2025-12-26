@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Memoization map: number -> steps to reach 1
 std::unordered_map<long long, int> memo;
@@ -22,18 +23,41 @@ int collatz_steps(long long n) {
     return it->second;
   }
 
-  // Calculate next value in sequence
-  long long next;
-  if (n % 2 == 0) {
-    next = n / 2;
-  } else {
-    next = 3 * n + 1;
+  // Track the path to memoize all intermediate values
+  std::vector<long long> path;
+  long long current = n;
+
+  // Follow the sequence until we hit 1 or a memoized value
+  while (current != 1) {
+    auto cached = memo.find(current);
+    if (cached != memo.end()) {
+      // Found a cached result, use it to compute steps for all values in path
+      int steps = cached->second;
+      for (int i = static_cast<int>(path.size()) - 1; i >= 0; i--) {
+        steps++;
+        memo[path[i]] = steps;
+      }
+      return memo[n];
+    }
+
+    path.push_back(current);
+
+    // Calculate next value in sequence
+    if (current % 2 == 0) {
+      current = current / 2;
+    } else {
+      current = 3 * current + 1;
+    }
   }
 
-  // Recursively compute and memoize
-  int steps = 1 + collatz_steps(next);
-  memo[n] = steps;
-  return steps;
+  // Reached 1, now memoize all values in the path
+  int steps = 0;
+  for (int i = static_cast<int>(path.size()) - 1; i >= 0; i--) {
+    steps++;
+    memo[path[i]] = steps;
+  }
+
+  return memo[n];
 }
 
 // Read existing data file and populate the memo map
