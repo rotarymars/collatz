@@ -93,7 +93,9 @@ void display_progress(long long current, long long start, long long total,
 
   // Calculate elapsed time and ETA
   auto now = std::chrono::steady_clock::now();
-  auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time).count();
+  auto elapsed =
+      std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time)
+          .count();
 
   double eta_seconds = 0;
   if (progress > 0 && progress < 1.0) {
@@ -103,20 +105,20 @@ void display_progress(long long current, long long start, long long total,
   // Build the progress bar
   int filled = static_cast<int>(progress * bar_width);
 
-  std::cout << "\r\033[K";  // Clear line
-  std::cout << "  \033[1;36m[\033[0m";  // Cyan bracket
+  std::cout << "\r\033[K";             // Clear line
+  std::cout << "  \033[1;36m[\033[0m"; // Cyan bracket
 
   for (int i = 0; i < bar_width; i++) {
     if (i < filled) {
-      std::cout << "\033[1;32m█\033[0m";  // Green filled
+      std::cout << "\033[1;32m█\033[0m"; // Green filled
     } else if (i == filled) {
-      std::cout << "\033[1;33m▓\033[0m";  // Yellow current position
+      std::cout << "\033[1;33m▓\033[0m"; // Yellow current position
     } else {
-      std::cout << "\033[0;90m░\033[0m";  // Dark gray empty
+      std::cout << "\033[0;90m░\033[0m"; // Dark gray empty
     }
   }
 
-  std::cout << "\033[1;36m]\033[0m ";  // Cyan bracket
+  std::cout << "\033[1;36m]\033[0m "; // Cyan bracket
 
   // Percentage
   std::cout << "\033[1;37m" << std::fixed << std::setprecision(1)
@@ -126,7 +128,7 @@ void display_progress(long long current, long long start, long long total,
   std::cout << "  \033[0;90m(" << current << "/" << total << ")\033[0m";
 
   // ETA
-  if (eta_seconds > 0 && eta_seconds < 86400) {  // Less than a day
+  if (eta_seconds > 0 && eta_seconds < 86400) { // Less than a day
     int mins = static_cast<int>(eta_seconds) / 60;
     int secs = static_cast<int>(eta_seconds) % 60;
     std::cout << "  \033[0;35mETA: ";
@@ -174,7 +176,8 @@ int main(int argc, char *argv[]) {
     // Start timing for progress bar
     auto progress_start = std::chrono::steady_clock::now();
 
-    // Calculate update frequency (update every 0.1% or at least every 100 numbers)
+    // Calculate update frequency (update every 0.1% or at least every 100
+    // numbers)
     long long range = max_number - start_number + 1;
     long long update_interval = std::max(1LL, std::min(range / 1000, 100LL));
 
@@ -189,7 +192,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    std::cout << "\n\n";  // Move past the progress bar
+    std::cout << "\n\n"; // Move past the progress bar
     datafile.close();
     std::cout << "✓ Data appended to " << datafilename << "\n";
     std::cout << "✓ Memo cache size: " << memo.size() << " entries\n";
