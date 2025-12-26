@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <string>
 
 // Calculate the number of steps for a number to reach 1 in the Collatz sequence
 int collatz_steps(long long n) {
@@ -16,6 +17,25 @@ int collatz_steps(long long n) {
   return steps;
 }
 
+// Read the last number from existing data file
+long long get_last_calculated_number(const std::string &filename) {
+  std::ifstream infile(filename);
+  if (!infile.is_open()) {
+    return 0; // File doesn't exist, start from beginning
+  }
+
+  long long last_number = 0;
+  long long num;
+  int steps;
+
+  while (infile >> num >> steps) {
+    last_number = num;
+  }
+
+  infile.close();
+  return last_number;
+}
+
 int main(int argc, char *argv[]) {
   // Default range
   long long max_number = 1000;
@@ -29,24 +49,34 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Output data file for gnuplot
-  std::ofstream datafile("collatz_data.txt");
-  if (!datafile.is_open()) {
-    std::cerr << "Error: Could not open data file for writing\n";
-    return 1;
+  const std::string datafilename = "collatz_data.txt";
+
+  // Find where to continue from
+  long long start_number = get_last_calculated_number(datafilename) + 1;
+
+  if (start_number > max_number) {
+    std::cout << "Already calculated up to " << (start_number - 1)
+              << ", nothing new to compute for max=" << max_number << "\n";
+  } else {
+    // Open file in append mode
+    std::ofstream datafile(datafilename, std::ios::app);
+    if (!datafile.is_open()) {
+      std::cerr << "Error: Could not open data file for writing\n";
+      return 1;
+    }
+
+    std::cout << "Calculating Collatz steps for numbers " << start_number
+              << " to " << max_number << "...\n";
+
+    // Calculate steps for each number and append to file
+    for (long long i = start_number; i <= max_number; i++) {
+      int steps = collatz_steps(i);
+      datafile << i << " " << steps << "\n";
+    }
+
+    datafile.close();
+    std::cout << "Data appended to " << datafilename << "\n";
   }
-
-  std::cout << "Calculating Collatz steps for numbers 1 to " << max_number
-            << "...\n";
-
-  // Calculate steps for each number and write to file
-  for (long long i = 1; i <= max_number; i++) {
-    int steps = collatz_steps(i);
-    datafile << i << " " << steps << "\n";
-  }
-
-  datafile.close();
-  std::cout << "Data written to collatz_data.txt\n";
 
   // Generate gnuplot script
   std::ofstream plotfile("plot_collatz.gp");
